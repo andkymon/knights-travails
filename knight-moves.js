@@ -26,15 +26,15 @@ const adjacencyList = [];
 // Generate adjacency list
 for (i = 0; i < 64; i++) {
     adjacencyList[i] = [];
-    adjacencyList[i].push(`${i}: `);
+    // adjacencyList[i].push(`${i}: `);
 
     for (const adjacentSquareConstant of adjacentSquareConstants) {
         // Get coordinates of adjacent square
-        const x = Math.floor(i / 8) + adjacentSquareConstant[0];
-        const y = (i % 8) + adjacentSquareConstant[1];
+        const x = (i % 8) + adjacentSquareConstant[0];
+        const y = Math.floor(i / 8) + adjacentSquareConstant[1];
 
         // If coordinate has a negative number, or is higher than 7, it is out of the chessboard's bounds
-        if (x > 0 && y > 0 && x < 8 && y < 8) {
+        if (x >= 0 && y >= 0 && x < 8 && y < 8) {
             // Store as square number
             adjacencyList[i].push(x + (y * 8));
         }
@@ -42,4 +42,7 @@ for (i = 0; i < 64; i++) {
 }
 
 console.log(adjacencyList);
-    
+// On a given coordinate
+// Do binary search on its adjacencylist
+// If not in the list, do binary search on
+// return movecounter + 1
