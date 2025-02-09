@@ -63,15 +63,16 @@ export function knightMoves(start, end) {
     while (queue.size() !== 0) {
         // Base case
         if (queue.headNode.value === endSquareNumber) {
-            if (queue.headNode.value === endSquareNumber && nodeData[endSquareNumber] === 0) {
+            if (nodeData[endSquareNumber] === 0) {
                 console.log(`You're already on that square, silly!`);
                 return;
-            } else if (queue.headNode.value === endSquareNumber && nodeData[endSquareNumber] === 1) {
+            } else if (nodeData[endSquareNumber] === 1) {
                 console.log(`You made it in ${nodeData[endSquareNumber].distanceFromRoot} move! Your path is:`);
             } else {
                 console.log(`You made it in ${nodeData[endSquareNumber].distanceFromRoot} moves! Your path is:`);
             }
 
+            // Store each node in shortest path to an array
             const pathArray = [];
             let searchPointer = endSquareNumber;
 
@@ -85,6 +86,7 @@ export function knightMoves(start, end) {
                 searchPointer = nodeData[searchPointer].parentIndex;
             }
 
+            // Display path from start to end by popping the array
             while (pathArray.length !== 0) {
                 console.log(pathArray.pop());
             }
