@@ -1,9 +1,9 @@
 import { LinkedList } from "./linked-list.js"
 
 // Chess board in coordinates is from [0, 0] to [7, 7], from bottom left to top right
-// We can label each square as 0 to 63, square on chessboard[1, 2] would be square 10
-// Conversion to square number is: coordinates: [x, y] -> squareNumber: x + (y * 8)
-// Square number to coordinates: squareNumber: i -> coordinates: [Math.floor(i / 8), (i % 8)]
+// We can index each coordinate as 0 to 63, square on chessboard[1, 2] would be index 10
+// Conversion to index is: coordinates: [x, y] -> index: x + (y * 8)
+// Index to coordinates: squareNumber: i -> coordinates: [Math.floor(i / 8), (i % 8)]
 // If coordinate has a negative number, or is higher than 7, it is out of the chessboard's bounds
 
 // In any square, a knight's adjacent squares are:
@@ -16,105 +16,37 @@ import { LinkedList } from "./linked-list.js"
 // coordinates: [x + 2, y - 1] 
 // coordinates: [x + 2, y + 1] 
 
-// Storing these constants in an array, sorted by ascending square numbers
-const adjacentSquareConstants = [[-1, -2], [1, -2], [-2, -1], [2, -1], [-2, 1], [2, 1], [-1, 2], [1, 2]];
+// Storing these constants in an array, sorted by ascending indices
+const adjacentVertexConstants = [[-1, -2], [1, -2], [-2, -1], [2, -1], [-2, 1], [2, 1], [-1, 2], [1, 2]];
 
-// Let's create an adjacency list, where each entry contains a list of all their adjacent squares
+// Let's create an adjacency list, where each index contains a list of all the indices they can move to
+// Adjacent vertices do not mean they are beside each other on the chessboard
 // adjacencyList[0] will store a list [[1, 2], [2, 1]]
-
 const adjacencyList = [];
+const CHESSBOARD_SIZE = 8 * 8;
 
-// Generate adjacency list
-for (let i = 0; i < 64; i++) {
+for (let i = 0; i < CHESSBOARD_SIZE; i++) {
     adjacencyList[i] = [];
 
-    for (const adjacentSquareConstant of adjacentSquareConstants) {
-        // Get coordinates of adjacent square
-        const x = (i % 8) + adjacentSquareConstant[0];
-        const y = Math.floor(i / 8) + adjacentSquareConstant[1];
+    for (const adjacentVertexConstant of adjacentVertexConstants) {
+        // Adjacent square validation must be done using coordinates, as some invalid coordinates can have a valid (but incorrect) index
+        const currentSquareCoordinates = getCoordinates(i);
+        const x = currentSquareCoordinates[0] + adjacentVertexConstant[0];
+        const y = currentSquareCoordinates[1] + adjacentVertexConstant[1];
+        const adjacentVertexCoordinates = [x, y];
 
-        if (validateCoordinates([x, y]) === true) {
-            // Store as square number
-            adjacencyList[i].push(x + (y * 8));
+        if (validateCoordinates(adjacentVertexCoordinates) === true) {
+            // Store index of adjacent square
+            adjacencyList[i].push(getIndex(adjacentVertexCoordinates));
         }
     }
 }
 
-// array to keep track of a node's distance from root and its parent's index, needed for output
-// Set unvisited nodes as null, visited nodes will store objects with data for distance and parent
-const nodeData = new Array(adjacencyList.length).fill(null);
+function getCoordinates(index) {
+    const x = (index % 8);
+    const y = Math.floor(index / 8);
 
-export function knightMoves(start, end) {
-    if (validateCoordinates(start) === false || validateCoordinates(end) === false) {
-        throw new Error("Invalid coordinates selected.");
-    }
-
-    // Convert coordinates to square/index numbers
-    const startSquareNumber = start[0] + (start[1] * 8);
-    const endSquareNumber = end[0] + (end[1] * 8);
-
-    // Clear nodeData array
-    nodeData.fill(null);
-
-    // Initialize root, distance of root to itself is always 0, and no parent
-    nodeData[startSquareNumber] = {distanceFromRoot: 0, parentIndex: null};
-
-    // Using queue for breadth-first search to find shortest path
-    const queue = new LinkedList();
-    queue.append(startSquareNumber);
-
-    while (queue.size() !== 0) {
-        // Base case
-        if (queue.headNode.value === endSquareNumber) {
-            if (nodeData[endSquareNumber] === 0) {
-                console.log(`You're already on that square, silly!`);
-                return;
-            } else if (nodeData[endSquareNumber] === 1) {
-                console.log(`You made it in ${nodeData[endSquareNumber].distanceFromRoot} move! Your path is:`);
-            } else {
-                console.log(`You made it in ${nodeData[endSquareNumber].distanceFromRoot} moves! Your path is:`);
-            }
-
-            // Store each node in shortest path to an array
-            const pathArray = [];
-            let searchPointer = endSquareNumber;
-
-            while (searchPointer !== null) {
-                // Convert to coordinates
-                const x = (searchPointer % 8);
-                const y = Math.floor(searchPointer / 8);
-                
-                pathArray.push([x, y]);
-
-                searchPointer = nodeData[searchPointer].parentIndex;
-            }
-
-            // Display path from start to end by popping the array
-            while (pathArray.length !== 0) {
-                console.log(pathArray.pop());
-            }
-
-            return;
-        }
-
-        // Set the front of the queue as parent, enqueue children (BFS)
-        const parentIndex = queue.headNode.value;
-        for (const adjacentNode of adjacencyList[parentIndex]) {
-            // Only enqueue non-visited nodes, which are null
-            if (nodeData[adjacentNode] === null) {
-                queue.append(adjacentNode); 
-
-                // Distance of a node from the root is its parent's distance from the root + 1
-                const distanceFromRoot = nodeData[parentIndex].distanceFromRoot + 1;
-
-                // Assign data values
-                nodeData[adjacentNode] = {distanceFromRoot, parentIndex};
-            }
-        }
-
-        // Dequeue
-        queue.headNode = queue.headNode.nextNode;
-    }
+    return [x, y];
 }
 
 function validateCoordinates(coordinates) {
@@ -123,4 +55,91 @@ function validateCoordinates(coordinates) {
         return false;
     }
     return true;
+}
+
+function getIndex(coordinates) {
+    return coordinates[0] + (coordinates[1] * 8);
+}
+
+// Array to keep track of a vertex's distance from starting vertex and its parent vertex's index, data needed for console output
+const vertexData = new Array(adjacencyList.length);
+
+export function knightMoves(start, end) {
+    if (validateCoordinates(start) === false || validateCoordinates(end) === false) {
+        throw new Error("Invalid coordinates selected.");
+    }
+
+    // Convert coordinates to index numbers
+    const startIndex = getIndex(start);
+    const endIndex = getIndex(end);
+
+    // Set unvisited vertices as null, visited vertices will store objects with data for distance and parent
+    vertexData.fill(null);
+
+    // Initialize root, distance of root to itself is always 0, and no parent
+    vertexData[startIndex] = {distanceFromStart: 0, parentIndex: null};
+
+    // Using queue for BFS (breadth-first search) to find shortest path between vertices
+    const queue = new LinkedList();
+    queue.append(startIndex);
+
+    while (queue.size() !== 0) {
+        // Base case
+        if (endVertexFound(queue, endIndex) === true) {
+            displayMoves(endIndex);
+            return;
+        }
+
+        // Access front of the queue, then enqueue its unvisited adjacent squares (BFS)
+        const parentIndex = queue.headNode.value;
+
+        for (const adjacentVertexIndex of adjacencyList[parentIndex]) {
+            // Only enqueue non-visited vertices, which are null
+            if (vertexData[adjacentVertexIndex] === null) {
+                queue.append(adjacentVertexIndex); 
+
+                // Distance of a vertex from the start is its parent's distance from the start + 1
+                const distanceFromStart = vertexData[parentIndex].distanceFromStart + 1;
+
+                // Assign square data values on their respective index in vertexData array
+                vertexData[adjacentVertexIndex] = {distanceFromStart, parentIndex};
+            }
+        }
+
+        // Dequeue
+        queue.headNode = queue.headNode.nextNode;
+    }
+}
+
+function endVertexFound(queue, endIndex) {
+    if (queue.headNode.value === endIndex) {
+        return true;
+    }
+}
+
+function displayMoves(endIndex) {
+    if (vertexData[endIndex].distanceFromStart === 0) {
+        console.log(`You're already on that square, silly!`);
+        return;
+    } else if (vertexData[endIndex].distanceFromStart === 1) {
+        console.log(`You made it in ${vertexData[endIndex].distanceFromStart} move! Your path is:`);
+    } else {
+        console.log(`You made it in ${vertexData[endIndex].distanceFromStart} moves! Your path is:`);
+    }
+
+    // Store each vertex in shortest path in an array
+    const pathArray = [];
+    let searchPointer = endIndex;
+
+    while (searchPointer !== null) {
+        const currentSquareCoordinates = getCoordinates(searchPointer);
+        pathArray.push(currentSquareCoordinates);
+
+        searchPointer = vertexData[searchPointer].parentIndex;
+    }
+
+    // Display path from start to end by popping each entry in the array
+    while (pathArray.length !== 0) {
+        console.log(pathArray.pop());
+    }
 }
