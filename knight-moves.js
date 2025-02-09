@@ -40,6 +40,10 @@ for (let i = 0; i < 64; i++) {
     }
 }
 
+// array to keep track of a node's distance from root and its parent's index, needed for output
+// Set unvisited nodes as null, visited nodes will store objects with data for distance and parent
+const nodeData = new Array(adjacencyList.length).fill(null);
+
 export function knightMoves(start, end) {
     if (validateCoordinates(start) === false || validateCoordinates(end) === false) {
         throw new Error("Invalid coordinates selected.");
@@ -49,10 +53,9 @@ export function knightMoves(start, end) {
     const startSquareNumber = start[0] + (start[1] * 8);
     const endSquareNumber = end[0] + (end[1] * 8);
 
-    // array to keep track of a node's distance from root and its parent's index, needed for output
-    // Set unvisited nodes as null, visited nodes will store objects with data for distance and parent
-    const nodeData = new Array(adjacencyList.length).fill(null);
-    
+    // Clear nodeData array
+    nodeData.fill(null);
+
     // Initialize root, distance of root to itself is always 0, and no parent
     nodeData[startSquareNumber] = {distanceFromRoot: 0, parentIndex: null};
 
